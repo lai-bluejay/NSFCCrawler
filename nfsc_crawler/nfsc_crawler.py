@@ -20,9 +20,11 @@ class NFSCCrawler(object):
             "Cookie": "_gscu_1512923953=79739154osesnl15; _gscbrs_1512923953=1; JSESSIONID=2A4F74CC5EED74873EF6222A70F7CB99",
         }
 
-        self.url = "http://npd.nsfc.gov.cn/projectSearch!searchAjaxForBut.action?project.code=&sort=0&pageSize=2000&project.searchYearEnd=&currentPage={0}&project.name=&project.leader=&project.organization=&project.organizationCode=&project.applyCode=F&project.category=&project.fundedYearStart=&project.fundedYearEnd=&checkCode=kx2g"
     def set_url(self, num):
-        self.url = self.url.format(str(num))
+        url = "http://npd.nsfc.gov.cn/projectSearch!searchAjaxForBut.action?project.code=&sort=0&pageSize=2000" \
+                   "&project.searchYearEnd=&currentPage={0}&project.name=&project.leader=&project.organization=&project.organizationCode=&project.applyCode=F&project.category=&project.fundedYearStart=&project.fundedYearEnd=&checkCode=kx2g"
+        self.url = url.format(str(num))
+        print self.url
         pass
 
 
@@ -34,8 +36,19 @@ class NFSCCrawler(object):
         leader_xpath = html.xpath('//*[@id="project_result"]/li/dl/dd[4]/a/text()')
         money_xpath = html.xpath('//*[@id="project_result"]/li/dl/dd[5]/text()')
         outcome_xpath = html.xpath('//*[@id="project_result"]/li/dl/dd[6]/a/text()')
+        outcome_list = list()
+        count = 0
+        tmp_s = ""
+        for outcome in outcome_xpath:
+            tmp_s += outcome.strip()
+            count +=1
+            if count>=5:
+                outcome_list.append(tmp_s)
+                tmp_s=""
+                count = 0
         with open('data/project_info.txt', mode="a") as fo:
-            for title, num, cate, org, leader, money, outcome in zip(title_xpath,num_xpath, cate_xpath, org_xpath,leader_xpath,money_xpath,outcome_xpath):
+            for title, num, cate, org, leader, money, outcome in zip(title_xpath,num_xpath, cate_xpath, org_xpath,
+                                                                     leader_xpath,money_xpath,outcome_list):
                 tmp_str = "\t".join([title.strip(), num.strip(), cate.strip(), u"依托单位:{0}".format(org.strip()),u"项目负责人:", leader.strip(),money.strip(), u"项目成果:", outcome.strip()])
                 fo.write(tmp_str.encode('utf8')+"\n")
                 # result_list.append(tmp_str)
@@ -50,7 +63,7 @@ class NFSCCrawler(object):
         self.page_parser(html)
 
     def get_all_data(self):
-        for i in range(10):
+        for i in range(1,11):
             self.set_url(i)
             self.post_data()
         pass
